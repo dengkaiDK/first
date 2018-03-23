@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 sess=tf.Session()
 mnist=input_data.read_data_sets('MNIST_data/',one_hot=True)
+#print(type(mnist))
 train_xdata=np.array([np.reshape(x,(28,28)) for x in mnist.train.images])
 test_xdata=np.array([np.reshape(x,(28,28)) for x in mnist.test.images])
 train_labels1=mnist.train.labels
