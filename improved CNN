@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from six.moves import urllib
-sess=tf.Seeion()
-
+sess=tf.Session()
+#超参数设置
 batch_size=128
 output_every=50
 generations=20000
@@ -25,15 +25,15 @@ lr_decay=0.9
 num_gens_to_wait=250
 image_vec_length=image_height*image_width*num_channels
 record_length=1+image_vec_length
-
+#建立临时文件保存数据
 if not os.path.exists(data_dir):
   os.makedirs(data_dir)
-  cifar10_url='http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
-  data_file=os.path.join(data_dir,'cifar-10-binary.tar.gz')
+cifar10_url='http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
+data_file=os.path.join(data_dir,'cifar-10-binary.tar.gz')
 if not os.path.isfile(data_file):
-  filepath,_=urllib.request.urlretrieve(cifar10_url,data_file,progress)
+  filepath,_=urllib.request.urlretrieve(cifar10_url,data_file)
   tarfile.open(filepath,'r:gz').extractall(data_dir)
-def read_cifar_files(filename_queue,distort_images=True):
+def read_cifar_files(filename_queue,distort_images=True):#读取图像文件，并且生成对应的图像和标签
   reader=tf.FixedLengthRecordReader(record_bytes=record_length)
   key,record_string=reader.read(filename_queue)
   record_bytes=tf.decode_raw(record_string,tf.uint8)
@@ -43,25 +43,25 @@ def read_cifar_files(filename_queue,distort_images=True):
   reshaped_image=tf.cast(image_uint8image,tf.float32)
   #Randomly crop image
   final_image=tf.image.resize_image_with_crop_or_pad(reshaped_image,crop_width,crop_height)
-    if distort_images:
-      final_image=tf.image.random_brightness(final_image,max_delta=63)
-      final_image=tf.image.random_flip_left_right(final_image)
-      final_image=tf.image.random_contrast(final_image,lower=0.2,upper=1.8)
+  if distort_images:
+    final_image=tf.image.random_brightness(final_image,max_delta=63)
+    final_image=tf.image.random_flip_left_right(final_image)
+    final_image=tf.image.random_contrast(final_image,lower=0.2,upper=1.8)
   final_image=tf.image.per_image_whitening(final_image)
   return (final_image,image_label)
 def input_pipeline(batch_size,train_logical=True):
   if train_logical:
     files=[os.path.join(data_dir,extract_folder,'data_batch_{}.bin'.format(i)) for i in range(1,6)]
   else:
-    files=[os.path.join(data_dir,extract_folder,'test_batch.bin')]
-  filename_queue=tf.train.string_input_producer(files)
-  image,label=read_cifar_files(filename_queue)
+    files=[os.path.join(data_dir,extract_folder,'test_batch.bin')]#此行用来保存图片所在的路径，存入到列表里
+  filename_queue=tf.train.string_input_producer(files)#通过转化成队列，进入图像管道填充函数
+  image,label=read_cifar_files(filename_queue)#通过图像管道填充函数将路径队列转化为图像和标签
   
   min_after_dequeue=1000
   capacity=min_after_dequeue+3*batch_size
-  example_batch,label_batch=tf.train.shuffle_batch([image,label],batch_size,capacity,min_after_dequeue)
+  example_batch,label_batch=tf.train.shuffle_batch([image,label],batch_size,capacity,min_after_dequeue)#随机抽取样本
   return (example_batch,label_batch)
-def cifar_cnn_model(input_images,batch_size,train_logical=True):
+def cifar_cnn_model(input_images,batch_size,train_logical=True):#卷积神经网络模型
   def truncated_normal_var(name,shape,dtype):
     return (tf.get_variable(name=name,shape=shape,dtype=dtype,intializer=tf.truncated_normal_intializer(stddev=0.05)))
   def zero_var(name,shape,dtype):
@@ -98,17 +98,17 @@ def cifar_cnn_model(input_images,batch_size,train_logical=True):
     full_bias3=zero_var(name='full_mult3',shape=[num_targets],dtype=tf.float32)
     final_output=tf.add(tf.matmul(full_layer2,full_weight3),full_bias3)
   return final_output
-def cifar_loss(logits,targets):
+def cifar_loss(logits,targets):#交叉熵损失函数
   targets=tf.squeeze(tf.cast(targets,tf.int32))
   cross_entropy=tf.nn.softmax_cross_entropy_with_logits(logits=logits,targets=targets)
   cross_entropy_mean=tf.reduce_mean(cross_entropy)
   return cross_entropy_mean
-def train_step(loss_value,generation_num):
+def train_step(loss_value,generation_num):#学习率逐渐降低
   model_learning_rate=tf.train.exponential_decay(learning_rate,generation_num,num_gens_to_wait,lr_decay,staircase=True)
   my_optimizer=tf.train.GradientDescentOptimizer(model_learning_rate)
   train_step=my_optimizer.minimize(loss_value)
   return train_step
-def accuracy_of_batch(logits,targets):
+def accuracy_of_batch(logits,targets):#准确率预测函数
   targets=tf.squeeze(tf.cast(targets,tf.int32))
   batch_prediction=tf.cast(tf.argmax(logits,1),tf.int32)
   predicted_correctly=tf.equal(batch_prediction,targets)
@@ -145,6 +145,7 @@ for i in range(generations):
     print(acc_output)
 eval_indices=range(0,generations,eval_every)
 output_indices=range(0,generetions,output_every)
+#可视化
 plt.figure()
 plt.plot(output_indices,train_loss,'k-')
 plt.title('Softmax loss per generation')
