@@ -1,0 +1,22 @@
+import os
+import tensorflow as tf
+import numpy as np
+import sys
+
+data_dir='C:\\Users\\dengkai\\working_space\\image_1'
+hand=[]
+hand_label=[]
+screen=[]
+screen_label=[]
+for file in os.listdir(data_dir):
+  if(file.split('_')[0]=='hand'):
+    hand.append(os.path.join(data_dir,file))
+    hand_label.append(0)
+  if(file.split('_')[0]=='screen'):
+    screen.append(os.path.join(data_dir,file))
+    screen_label.append(1)
+print('there are {} hand and {} screen'.format(len(hand),len(screen)))
+image=np.hstack([hand,screen])
+label=np.hstack([hand_label,screen_label])
+label_image=np.vstack((image,label))
+label_image=label_image.transpose()
