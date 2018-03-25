@@ -18,6 +18,7 @@ crop_width=24
 num_channels=3
 num_targets=10
 data_dir='temp'
+folder='cifar-10-binary'
 extract_folder='cifar-10-batches-bin'
 
 learning_rate=0.1
@@ -26,6 +27,7 @@ num_gens_to_wait=250
 image_vec_length=image_height*image_width*num_channels
 record_length=1+image_vec_length
 #建立临时文件保存数据
+'''
 if not os.path.exists(data_dir):
   os.makedirs(data_dir)
 cifar10_url='http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
@@ -33,6 +35,8 @@ data_file=os.path.join(data_dir,'cifar-10-binary.tar.gz')
 if not os.path.isfile(data_file):
   filepath,_=urllib.request.urlretrieve(cifar10_url,data_file)
   tarfile.open(filepath,'r:gz').extractall(data_dir)
+'''
+data_file=os.path.join(data_dir,folder,extract_folder)
 def read_cifar_files(filename_queue,distort_images=True):#读取图像文件，并且生成对应的图像和标签
   reader=tf.FixedLengthRecordReader(record_bytes=record_length)
   key,record_string=reader.read(filename_queue)
@@ -47,13 +51,13 @@ def read_cifar_files(filename_queue,distort_images=True):#读取图像文件，�
     final_image=tf.image.random_brightness(final_image,max_delta=63)
     final_image=tf.image.random_flip_left_right(final_image)
     final_image=tf.image.random_contrast(final_image,lower=0.2,upper=1.8)
-  final_image=tf.image.per_image_whitening(final_image)
+  #final_image=tf.image.per_image_whitening(final_image)
   return (final_image,image_label)
 def input_pipeline(batch_size,train_logical=True):
   if train_logical:
-    files=[os.path.join(data_dir,extract_folder,'data_batch_{}.bin'.format(i)) for i in range(1,6)]
+    files=[os.path.join(data_dir,folder,extract_folder,'data_batch_{}.bin'.format(i)) for i in range(1,6)]
   else:
-    files=[os.path.join(data_dir,extract_folder,'test_batch.bin')]#此行用来保存图片所在的路径，存入到列表里
+    files=[os.path.join(data_dir,folder,extract_folder,'test_batch.bin')]#此行用来保存图片所在的路径，存入到列表里
   filename_queue=tf.train.string_input_producer(files)#通过转化成队列，进入图像管道填充函数
   image,label=read_cifar_files(filename_queue)#通过图像管道填充函数将路径队列转化为图像和标签
   
@@ -63,9 +67,9 @@ def input_pipeline(batch_size,train_logical=True):
   return (example_batch,label_batch)
 def cifar_cnn_model(input_images,batch_size,train_logical=True):#卷积神经网络模型
   def truncated_normal_var(name,shape,dtype):
-    return (tf.get_variable(name=name,shape=shape,dtype=dtype,intializer=tf.truncated_normal_intializer(stddev=0.05)))
+    return (tf.get_variable(name=name,shape=shape,dtype=dtype,initializer=tf.truncated_normal_initializer(stddev=0.05)))
   def zero_var(name,shape,dtype):
-    return (tf.get_variable(name=name,shape=shape,dtype=dtype,intializer=tf.constant_intializer(0.0)))
+    return (tf.get_variable(name=name,shape=shape,dtype=dtype,initializer=tf.constant_initializer(0.0)))
   with tf.variable_scope('conv1') as scope:
     conv1_kernel=truncated_normal_var(name='conv_kernel1',shape=[5,5,3,64],dtype=tf.float32)
     conv1=tf.nn.conv2d(input_images,conv1_kernel,[1,1,1,1],padding='SAME')
@@ -91,16 +95,16 @@ def cifar_cnn_model(input_images,batch_size,train_logical=True):#卷积神经网
     full_layer1=tf.nn.relu(tf.add(tf.matmul(reshaped_output,full_weight1),full_bias1))
   with tf.variable_scope('full2') as scope:
     full_weight2=truncated_normal_var(name='full_mult2',shape=[384,192],dtype=tf.float32)
-    full_bias2=zero_var(name='full_mult2',shape=[192],dtype=tf.float32)
+    full_bias2=zero_var(name='full_bias2',shape=[192],dtype=tf.float32)
     full_layer2=tf.nn.relu(tf.add(tf.matmul(full_layer1,full_weight2),full_bias2))
   with tf.variable_scope('full3') as scope:
     full_weight3=truncated_normal_var(name='full_mult3',shape=[192,num_targets],dtype=tf.float32)
-    full_bias3=zero_var(name='full_mult3',shape=[num_targets],dtype=tf.float32)
+    full_bias3=zero_var(name='full_bias3',shape=[num_targets],dtype=tf.float32)
     final_output=tf.add(tf.matmul(full_layer2,full_weight3),full_bias3)
   return final_output
 def cifar_loss(logits,targets):#交叉熵损失函数
   targets=tf.squeeze(tf.cast(targets,tf.int32))
-  cross_entropy=tf.nn.softmax_cross_entropy_with_logits(logits=logits,targets=targets)
+  cross_entropy=tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,labels=targets)
   cross_entropy_mean=tf.reduce_mean(cross_entropy)
   return cross_entropy_mean
 def train_step(loss_value,generation_num):#学习率逐渐降低
@@ -117,7 +121,8 @@ def accuracy_of_batch(logits,targets):#准确率预测函数
 images,targets=input_pipeline(batch_size,train_logical=True)
 test_images,test_targets=input_pipeline(batch_size,train_logical=False)
 
-with tf.variable_scope('model_definition') as scope:
+with tf.variable_scope('model_definition1') as scope:
+  #scope.reuse_variables()
   model_output=cifar_cnn_model(images,batch_size)
   scope.reuse_variables()
   test_output=cifar_cnn_model(test_images,batch_size)
@@ -136,7 +141,7 @@ for i in range(generations):
   _,loss_value=sess.run([train_op,loss])
   if (i+1)%output_every==0:
     train_loss.append(loss_value)
-    ouput='Generation{}: Loss={:.5f}'.format((i+1),loss_value)
+    output='Generation{}: Loss={:.5f}'.format((i+1),loss_value)
     print(output)
   if (i+1)%eval_every==0:
     [temp_accuracy]=sess.run([accuracy])
