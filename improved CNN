@@ -11,15 +11,15 @@ batch_size=128
 output_every=50
 generations=20000
 eval_every=500
-image_height=32
-image_width=32
-crop_height=24
-crop_width=24
+image_height=32#高
+image_width=32#宽
+crop_height=24#裁剪高度
+crop_width=24#裁剪宽度
 num_channels=3
-num_targets=10
-data_dir='temp'
-folder='cifar-10-binary'
-extract_folder='cifar-10-batches-bin'
+num_targets=10#目标个数
+data_dir='temp'#临时文件夹
+folder='cifar-10-binary'#子文件
+extract_folder='cifar-10-batches-bin'#压缩文件
 
 learning_rate=0.1
 lr_decay=0.9
@@ -36,7 +36,7 @@ if not os.path.isfile(data_file):
   filepath,_=urllib.request.urlretrieve(cifar10_url,data_file)
   tarfile.open(filepath,'r:gz').extractall(data_dir)
 '''
-data_file=os.path.join(data_dir,folder,extract_folder)
+data_file=os.path.join(data_dir,folder,extract_folder)#连接
 def read_cifar_files(filename_queue,distort_images=True):#读取图像文件，并且生成对应的图像和标签
   reader=tf.FixedLengthRecordReader(record_bytes=record_length)
   key,record_string=reader.read(filename_queue)
