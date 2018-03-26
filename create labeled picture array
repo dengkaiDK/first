@@ -2,21 +2,31 @@ import os
 import tensorflow as tf
 import numpy as np
 import sys
-
-data_dir='C:\\Users\\dengkai\\working_space\\image_1'
-hand=[]
-hand_label=[]
-screen=[]
-screen_label=[]
-for file in os.listdir(data_dir):
-  if(file.split('_')[0]=='hand'):
-    hand.append(os.path.join(data_dir,file))
-    hand_label.append(0)
-  if(file.split('_')[0]=='screen'):
-    screen.append(os.path.join(data_dir,file))
-    screen_label.append(1)
-print('there are {} hand and {} screen'.format(len(hand),len(screen)))
-image=np.hstack([hand,screen])
-label=np.hstack([hand_label,screen_label])
-label_image=np.vstack((image,label))
-label_image=label_image.transpose()
+os.chdir('C:\\Users\\dengkai\\working_space')
+os.getcwd()
+data_dir='C:\\Users\\dengkai\\working_space\\image\\light\\train'
+data_dir2='C:\\Users\\dengkai\\working_space\\image\\light\\test'
+data_dir3='C:\\Users\\dengkai\\working_space\\image\\ult\\train'
+data_dir4='C:\\Users\\dengkai\\working_space\\image\\ult\\test'
+def get_list(data_dir):
+  block=[]
+  block_label=[]
+  empty=[]
+  empty_label=[]
+  for file in os.listdir(data_dir):
+    if(file.split('_')[0]=='block'):
+      block.append(os.path.join(data_dir,file))
+      block_label.append(1)
+    if(file.split('_')[0]=='empty'):
+      empty.append(os.path.join(data_dir,file))
+      empty_label.append(0)
+  print('there are {} block and {} empty'.format(len(block),len(empty)))
+  image=np.hstack([block,empty])
+  label=np.hstack([block_label,empty_label])
+  label_image=np.vstack((image,label))
+  label_image=label_image.transpose()
+  return label_image
+image_light_train=get_list(data_dir)
+image_light_test=get_list(data_dir2)
+image_ult_train=get_list(data_dir3)
+image_ult_test=get_list(data_dir4)
