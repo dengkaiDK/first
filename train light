@@ -44,8 +44,8 @@ def get_list(data_dir):
   label_image=np.array((image,label))
   label_image=label_image.transpose()
   np.random.shuffle(label_image)
-  image_list=list[label_image[:,0]]
-  label_list=list[label_image[:,1]]
+  image_list=list(label_image[:,0])
+  label_list=list(int(i) for i in label_image[:,1])
   return image_list,label_list
 image_train,label_train=get_list(data_dir)
 image_test,label_test=get_list(data_dir2)
@@ -54,8 +54,8 @@ image_test,label_test=get_list(data_dir2)
 
 
 def get_batch(image,label,batch_size):
-  imagepaths = tf.convert_to_tensor(imagepaths, tf.string)  
-  labels = tf.convert_to_tensor(labels, tf.int32)
+  imagepaths = tf.convert_to_tensor(image, tf.string)  
+  labels = tf.convert_to_tensor(label, tf.int32)
   imagepath, label = tf.train.slice_input_producer([imagepaths, labels], shuffle=True)  
   image = tf.read_file(imagepath)  
   image = tf.image.decode_jpeg(image, channels=IMAGE_CHANNELS)
@@ -145,12 +145,12 @@ def accuracy_of_batch(logits,targets):#准确率预测函数
 
 image_batch,label_batch=get_batch(image_train,label_train,batch_size)
 test_image,test_label=get_batch(image_test,label_test,batch_size)
-with tf.variable_scope('model_definition') as scope:
+with tf.variable_scope('model_definition1') as scope:
   model_output=cifar_cnn_model(image_batch,batch_size)
   scope.reuse_variables()
-  test_output=cifar_cnn_model(image_test,batch_size)
-loss=cifar_loss(model_output,label_train)
-accuracy=accuracy_of_batch(test_output,label_test)
+  test_output=cifar_cnn_model(test_image,batch_size)
+loss=cifar_loss(model_output,label_batch)
+accuracy=accuracy_of_batch(test_output,test_label)
 train_op=train_step(loss)
 init=tf.initialize_all_variables()
 with tf.Session as sess:
