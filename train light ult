@@ -10,8 +10,8 @@ os.getcwd()
 
 data_dir='C:\\Users\\dengkai\\working_space\\image\\light\\train'
 data_dir2='C:\\Users\\dengkai\\working_space\\image\\light\\test'
-data_dir3='C:\\Users\\dengkai\\working_space\\image\\ult\\train'
-data_dir4='C:\\Users\\dengkai\\working_space\\image\\ult\\test'
+data_dir3='C:\\Users\\dengkai\\working_space\\image\\ult_new\\train'
+data_dir4='C:\\Users\\dengkai\\working_space\\image\\ult_new\\test'
 
 #超参数
 batch_size=128
@@ -25,6 +25,8 @@ generations=1000
 image_height=40
 image_width=40
 IMAGE_CHANNELS=3
+lr_decay=0.9
+num_gens_to_wait=250
 
 def get_list(data_dir):
   block=[]
@@ -49,8 +51,8 @@ def get_list(data_dir):
   return image_list,label_list
 image_train,label_train=get_list(data_dir)
 image_test,label_test=get_list(data_dir2)
-image_ult_train=get_list(data_dir3)
-image_ult_test=get_list(data_dir4)
+image_train1,label_train1=get_list(data_dir3)
+image_test1,label_test1=get_list(data_dir4)
 
 
 def get_batch(image,label,batch_size):
@@ -129,8 +131,8 @@ def cifar_loss(logits,targets):#交叉熵损失函数
   cross_entropy=tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,labels=targets)
   cross_entropy_mean=tf.reduce_mean(cross_entropy)
   return cross_entropy_mean
-def train_step(loss_value):#学习率逐渐降低
-  #model_learning_rate=tf.train.exponential_decay(learning_rate,generation_num,num_gens_to_wait,lr_decay,staircase=True)
+def train_step(loss_value,generation_num):#学习率逐渐降低
+  model_learning_rate=tf.train.exponential_decay(learning_rate,generation_num,num_gens_to_wait,lr_decay,staircase=True)
   my_optimizer=tf.train.GradientDescentOptimizer(model_learning_rate)
   train_step=my_optimizer.minimize(loss_value)
   return train_step
@@ -145,15 +147,18 @@ def accuracy_of_batch(logits,targets):#准确率预测函数
 
 image_batch,label_batch=get_batch(image_train,label_train,batch_size)
 test_image,test_label=get_batch(image_test,label_test,batch_size)
-with tf.variable_scope('model_definition') as scope:
-  model_output=cifar_cnn_model(image_batch,batch_size)
+image_batch1,label_batch1=get_batch(image_train1,label_train1,batch_size)
+test_image1,test_label1=get_batch(image_test1,label_test1,batch_size)
+with tf.variable_scope('model_definition5') as scope:
+  model_output=cifar_cnn_model(image_batch1,batch_size)
   scope.reuse_variables()
-  test_output=cifar_cnn_model(test_image,batch_size)
-loss=cifar_loss(model_output,label_batch)
-accuracy=accuracy_of_batch(test_output,test_label)
-train_op=train_step(loss)
+  test_output=cifar_cnn_model(test_image1,batch_size)
+loss=cifar_loss(model_output,label_batch1)
+accuracy=accuracy_of_batch(test_output,test_label1)
+generation_num=tf.Variable(0,trainable=False)
+train_op=train_step(loss,generation_num)
 init=tf.initialize_all_variables()
-with tf.Session as sess:
+with tf.Session() as sess:
   sess.run(init)
   threads=tf.train.start_queue_runners(sess=sess)
   train_loss=[]
