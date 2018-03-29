@@ -175,7 +175,7 @@ with tf.Session() as sess:
       acc_output='---Test accuracy={:.2f}%.'.format(100.*temp_accuracy)
       print(acc_output)
   eval_indices=range(0,generations,eval_every)
-  output_indices=range(0,generetions,output_every)
+  output_indices=range(0,generations,output_every)
   #可视化
   plt.figure()
   plt.plot(output_indices,train_loss,'b-')
@@ -189,3 +189,5 @@ with tf.Session() as sess:
   plt.xlabel('Generation')
   plt.ylabel('Accuracy')
   plt.show()
+np.savetxt('ult_new_loss',train_loss)
+np.savetxt('ult_new_acc',test_accuracy)
