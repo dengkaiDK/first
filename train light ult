@@ -12,7 +12,10 @@ data_dir='C:\\Users\\dengkai\\working_space\\image\\light\\train'
 data_dir2='C:\\Users\\dengkai\\working_space\\image\\light\\test'
 data_dir3='C:\\Users\\dengkai\\working_space\\image\\ult_new\\train'
 data_dir4='C:\\Users\\dengkai\\working_space\\image\\ult_new\\test'
-
+data_dir5='C:\\Users\\dengkai\\working_space\\image\\ult_new_dynamic\\train'
+data_dir6='C:\\Users\\dengkai\\working_space\\image\\ult_new_dynamic\\test'
+data_dir7='C:\\Users\dengkai\\working_space\\image\\ult_new_static\\train'
+data_dir8='C:\\Users\\dengkai\\working_space\\image\\ult_new_static\\test'
 #超参数
 batch_size=128
 IMAGE_WIDTH=32
@@ -53,7 +56,10 @@ image_train,label_train=get_list(data_dir)
 image_test,label_test=get_list(data_dir2)
 image_train1,label_train1=get_list(data_dir3)
 image_test1,label_test1=get_list(data_dir4)
-
+image_train2,label_train2=get_list(data_dir5)
+image_test2,label_test2=get_list(data_dir6)
+image_train3,label_train3=get_list(data_dir7)
+image_test3,label_test3=get_list(data_dir8)
 
 def get_batch(image,label,batch_size):
   imagepaths = tf.convert_to_tensor(image, tf.string)  
@@ -149,12 +155,17 @@ image_batch,label_batch=get_batch(image_train,label_train,batch_size)
 test_image,test_label=get_batch(image_test,label_test,batch_size)
 image_batch1,label_batch1=get_batch(image_train1,label_train1,batch_size)
 test_image1,test_label1=get_batch(image_test1,label_test1,batch_size)
-with tf.variable_scope('model_definition5') as scope:
-  model_output=cifar_cnn_model(image_batch1,batch_size)
+image_batch2,label_batch2=get_batch(image_train2,label_train2,batch_size)
+test_image2,test_label2=get_batch(image_test2,label_test2,batch_size)
+image_batch3,label_batch3=get_batch(image_train3,label_train3,batch_size)
+test_image3,test_label3=get_batch(image_test3,label_test3,batch_size)
+
+with tf.variable_scope('model_definition6') as scope:
+  model_output=cifar_cnn_model(image_batch2,batch_size)
   scope.reuse_variables()
-  test_output=cifar_cnn_model(test_image1,batch_size)
-loss=cifar_loss(model_output,label_batch1)
-accuracy=accuracy_of_batch(test_output,test_label1)
+  test_output=cifar_cnn_model(test_image2,batch_size)
+loss=cifar_loss(model_output,label_batch2)
+accuracy=accuracy_of_batch(test_output,test_label2)
 generation_num=tf.Variable(0,trainable=False)
 train_op=train_step(loss,generation_num)
 init=tf.initialize_all_variables()
@@ -174,20 +185,20 @@ with tf.Session() as sess:
       test_accuracy.append(temp_accuracy)
       acc_output='---Test accuracy={:.2f}%.'.format(100.*temp_accuracy)
       print(acc_output)
-  eval_indices=range(0,generations,eval_every)
-  output_indices=range(0,generations,output_every)
-  #可视化
-  plt.figure()
-  plt.plot(output_indices,train_loss,'b-')
-  plt.title('Softmax loss per generation')
-  plt.xlabel('Genaration')
-  plt.ylabel('Softmax Loss')
-  plt.show()
-  plt.figure()
-  plt.plot(eval_indices,test_accuracy,'r-')
-  plt.title('Test Accuracy')
-  plt.xlabel('Generation')
-  plt.ylabel('Accuracy')
-  plt.show()
+eval_indices=range(0,generations,eval_every)
+output_indices=range(0,generations,output_every)
+#可视化
+plt.figure()
+plt.plot(output_indices,train_loss,'b-')
+plt.title('Softmax loss per generation')
+plt.xlabel('Genaration')
+plt.ylabel('Softmax Loss')
+plt.show()
+plt.figure()
+plt.plot(eval_indices,test_accuracy,'r-')
+plt.title('Test Accuracy')
+plt.xlabel('Generation')
+plt.ylabel('Accuracy')
+plt.show()
 np.savetxt('ult_new_loss',train_loss)
 np.savetxt('ult_new_acc',test_accuracy)
