@@ -185,6 +185,7 @@ with tf.Session() as sess:
       test_accuracy.append(temp_accuracy)
       acc_output='---Test accuracy={:.2f}%.'.format(100.*temp_accuracy)
       print(acc_output)
+  sess.close()
 eval_indices=range(0,generations,eval_every)
 output_indices=range(0,generations,output_every)
 #可视化
