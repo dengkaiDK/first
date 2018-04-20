@@ -16,6 +16,7 @@ batch_size=100
 x_data=tf.placeholder(shape=[None,2],dtype=tf.float32)
 y_target=tf.placeholder(shape=[None,1],dtype=tf.float32)
 prediction_grid=tf.placeholder(shape=[None,2],dtype=tf.float32)
+b=tf.Variable(tf.random_normal(shape=[1,batch_size]))
 
 gamma=tf.constant(-10.0)
 dist=tf.reduce_sum(tf.square(x_data),1)
@@ -28,7 +29,7 @@ first_term=tf.reduce_sum(b)
 b_vec_cross=tf.matmul(tf.transpose(b),b)
 y_target_cross=tf.matmul(y_target,tf.transpose(y_target))
 second_term=tf.reduce_sum(tf.multiply(my_kernel,tf.multiply(b_vec_cross,y_target_cross)))
-loss=tf.neg(tf.subtract(first_term,second_term))
+loss=tf.negative(tf.subtract(first_term,second_term))
 
 rA=tf.reshape(tf.reduce_sum(tf.square(x_data),1),[-1,1])
 rB=tf.reshape(tf.reduce_sum(tf.square(prediction_grid),1),[-1,1])
@@ -58,10 +59,11 @@ for i in range(300):
 x_min,x_max=x_vals[:,0].min()-1,x_vals[:,0].max()+1
 y_min,y_max=x_vals[:,1].min()-1,x_vals[:,1].max()+1
 xx,yy=np.meshgrid(np.arange(x_min,x_max,0.02),np.arange(y_min,y_max,0.02))
+grid_points=np.c_[xx.ravel(),yy.ravel()]
 [grid_predictions]=sess.run(prediction,feed_dict={x_data:rand_x,y_target:rand_y,prediction_grid:grid_points})
 grid_predictions=grid_predictions.reshape(xx.shape)
 
-plt.contourf(xx,yy,grid_predictions,cmap=plt.cm.Paried,alpha=0.8)
+plt.contourf(xx,yy,grid_predictions,cmap=plt.cm.Paired,alpha=0.8)
 plt.plot(class1_x,class1_y,'ro',label='I.setosa')
 plt.plot(class2_x,class2_y,'kx',label='Non setosa')
 plt.title('Gaussian SVM Results on iris Data')
