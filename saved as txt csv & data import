@@ -1,0 +1,47 @@
+import re
+import os
+import csv
+#库导入
+os.getcwd()  #获取当前的目录
+os.chdir(r'要更改的目录')
+file_root='C:\\腾讯算法大赛'
+file_temp='preliminary_contest_data'
+file_data_feature='userFeature.data'
+os.path.join(file_root,file_temp,file_data_feature)  #连接文件路径
+os.path.isfile('C:\\腾讯算法大赛\\preliminary_contest_data\\userFeature.data')  #查看文件是否在路径下
+data=open(file_root+'\\'+file_temp+'\\'+file_data_feature,'r') #以可读形式打开
+type(data)  #查看类型，应该为文件类型
+os.path.getsize(file_root+'\\'+file_temp+'\\'+file_data_feature)  #获取文件的大小信息
+file_name=file_root+'\\'+file_temp+'\\'+file_data_feature
+os.path.dirname(file_name)  #查看父目录
+os.path.isdir(file_root)  #查看文件是否存在
+dirFile=os.path.split(file_name) #文件分割为根目录和当前目录
+data_list1=data.readline()   #读取一行，保存为列表，查看内容 可运行 data_list1
+data.tell()  #当前游标位置
+data.seek(0)  #游标回到原点
+data_list=[]   #生成列表保存内容
+for i in range(1000):
+  data_list.append(data.readline())
+#先保存1000个来做一个实验
+#feature_txt='userFeature.txt' #生成txt文件保存中间结果  注意这样只会生成文件
+#os.path.join(file_root,file_temp,feature_txt)
+#  os.mkdir(filename) 建立文件夹   os.path.isfile()查看文件是否存在  os.remove(filename) 删除文件 注意建立的文件位置会随着工作目录而改变
+# 也可以指定具体的路径下     os.path.isdir() 查看是否 为文件目录  使用os.remove时会遇到权限问题
+#文件知识总结，  首先，新建首先转变工作目录，然后建立指定目录下的文件，使用路径连接进行相连，最后使用查看确定目录是否建立 可能有权限问题
+# 新建文档则使用写的方式打开一个文件就可以了
+#新建文本格式文件来临时保存数据
+with open('storage.txt','w') as f:
+  for i in range(len(data_list)):
+    data_str1=str(data_list[i])
+    data_temp=re.split(r'[|, ,\n]',data_str1)
+    data_string=' '.join(data_temp)
+    f.write(data_string+'\n')
+#生成了以空格为分隔符的，以一行为记录的文本文件
+
+#转换成csv文件   strip(string) 删除string 字符串在开头结尾处
+with open('file.csv','w') as csvfile:
+  writer=csv.writer(csvfile,dialect='excel')
+  with open('storage.txt','r') as filein:
+    for line in filein:
+      line_list=line.strip('\n').split(' ')
+      writer.writerow(line_list)
